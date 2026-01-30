@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="FifoWellness.Api/FifoWellness.Api.csproj" />
+  <Project Path="FifoWellness.Tests/FifoWellness.Tests.csproj" Id="7ec95494-bd06-49dc-9591-9bc91f730b39" />
 </Solution>

@@ -27,6 +27,21 @@ namespace FifoWellness.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<WellnessLog>> PostWellnessLog(WellnessLog log)
         {
+            // force the creation timestamp to current UTC time
+            log.CreatedDate = DateTime.UtcNow;
+
+            // businessl logic : Categorize fatigue status based on sleep hours.
+            // standard safety threshold : 6.0 hours
+            if (log.SleepHours < 6.0)
+            {
+                log.FatigueStatus = "At Risk";
+            }
+            else 
+            {
+                log.FatigueStatus = "Healthy";
+            }
+            
+
             _context.WellnessLogs.Add(log);
             await _context.SaveChangesAsync();
 
