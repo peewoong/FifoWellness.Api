@@ -1,0 +1,10 @@
+version: '3.4'
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - MSSQL_SA_PASSWORD=YourPassword123! # DB admin password
+      - ACCEPT_EULA=Y # Accept the end user license agreement
+    ports:
+      - "1433:1433"

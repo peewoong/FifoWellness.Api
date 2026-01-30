@@ -15,13 +15,14 @@ namespace FifoWellness.Api.Migrations
                 name: "WellnessLogs",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    WorkerName = table.Column<string>(type: "TEXT", nullable: false),
-                    ShiftType = table.Column<string>(type: "TEXT", nullable: false),
-                    SleepHours = table.Column<double>(type: "REAL", nullable: false),
-                    CalorieIntake = table.Column<int>(type: "INTEGER", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    WorkerName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ShiftType = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SleepHours = table.Column<double>(type: "float", nullable: false),
+                    CalorieIntake = table.Column<int>(type: "int", nullable: false),
+                    FatigueStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
