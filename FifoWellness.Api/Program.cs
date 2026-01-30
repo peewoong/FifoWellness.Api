@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using FifoWellness.Api.Models;
+using FifoWellness.Api.Services;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,8 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=FifoWellness.db"));
+
+builder.Services.AddScoped<IWellnessService, WellnessService>();
 
 var app = builder.Build();
 

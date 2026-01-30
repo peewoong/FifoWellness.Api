@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FifoWellness.Api.Models;
+using FifoWellness.Api.Services;
 
 namespace FifoWellness.Api.Controllers
 {
@@ -9,9 +10,11 @@ namespace FifoWellness.Api.Controllers
     public class WellnessController : ControllerBase
     {
         private readonly AppDbContext _context;
-        public WellnessController(AppDbContext context)
+        private readonly IWellnessService _wellnessService;
+        public WellnessController(AppDbContext context, IWellnessService wellnessService)
         {
             _context = context;
+            _wellnessService = wellnessService;
         }
 
         // GET : api/Wellness
@@ -30,17 +33,8 @@ namespace FifoWellness.Api.Controllers
             // force the creation timestamp to current UTC time
             log.CreatedDate = DateTime.UtcNow;
 
-            // businessl logic : Categorize fatigue status based on sleep hours.
-            // standard safety threshold : 6.0 hours
-            if (log.SleepHours < 6.0)
-            {
-                log.FatigueStatus = "At Risk";
-            }
-            else 
-            {
-                log.FatigueStatus = "Healthy";
-            }
-            
+            // Delegate the logic to the service
+            _wellnessService.EvaluateFatigueStatus(log);
 
             _context.WellnessLogs.Add(log);
             await _context.SaveChangesAsync();
