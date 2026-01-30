@@ -30,12 +30,16 @@ namespace FifoWellness.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<WellnessLog>> PostWellnessLog(WellnessLog log)
         {
-            // force the creation timestamp to current UTC time
+            // Retrieve the existing wellness history for the specific worker from the database.
+            var history = await _context.WellnessLogs
+                .Where(w => w.WorkerName == log.WorkerName)
+                .ToListAsync();
+
+            // Process the log through the service to analyze fatigue levels based on history.
+            _wellnessService.EvaluateFatigueStatus(log, history);
+
+            // Set the creation timestamp and persist the new log to the database.
             log.CreatedDate = DateTime.UtcNow;
-
-            // Delegate the logic to the service
-            _wellnessService.EvaluateFatigueStatus(log);
-
             _context.WellnessLogs.Add(log);
             await _context.SaveChangesAsync();
 

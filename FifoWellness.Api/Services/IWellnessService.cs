@@ -4,6 +4,7 @@ namespace FifoWellness.Api.Services
 {
     public interface IWellnessService
     {
-        void EvaluateFatigueStatus(WellnessLog log);
+        // Evaluates the fatigue status by analyzing the current log and historical data 
+        void EvaluateFatigueStatus(WellnessLog currentLog, List<WellnessLog> history);
     }
 }
