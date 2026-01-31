@@ -52,5 +52,19 @@ namespace FifoWellness.Api.Controllers
             // Returns the created log with a 201 created status
             return CreatedAtAction(nameof(GetWellnessLogs), new { id = log.Id }, log);
         }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteWellnessLog(int id)
+        {
+            var log = await _context.WellnessLogs.FindAsync(id);
+            if (log == null)
+            {
+                return NotFound();
+            }
+
+            _context.WellnessLogs.Remove(log);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
     }
 }

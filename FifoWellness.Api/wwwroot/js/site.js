@@ -72,6 +72,9 @@
 
     // [ADD] Call the summary update function
     updateRiskSummary(recentLogs);
+
+    // [ADD] Render the log table
+    renderTable(recentLogs);
 }
 
 function updateRiskSummary(logs) {
@@ -92,5 +95,41 @@ function updateRiskSummary(logs) {
     }
 }
 
-
 loadDashboard();
+
+function renderTable(logs) {
+    const tableBody = document.getElementById('logTableBody');
+    if (!tableBody) return;
+
+    tableBody.innerHTML = '';
+
+    logs.reverse().forEach(log => { 
+        const row = document.createElement('tr');
+        row.style.borderBottom = "1px solid #eee";
+
+        row.innerHTML = `
+            <td style="padding: 10px;">${log.workerName}</td>
+            <td style="padding: 10px;">${log.sleepHours}h</td>
+            <td style="padding: 10px;">${new Date(log.createdDate).toLocaleDateString()}</td>
+            <td style="padding: 10px;">
+                <button onclick="deleteLog(${log.id})" style="color: #e74c3c; border: none; background: none; cursor: pointer; font-weight: bold;">Delete</button>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+async function deleteLog(id) {
+    if (!confirm("Are you sure you want to delete this log?")) return;
+
+    const response = await fetch(`/api/Wellness/${id}`, {
+        method: 'DELETE'
+    });
+
+    if (response.ok) {
+        alert("Deleted successfully!");
+        loadDashboard(); 
+    } else {
+        alert("Failed to delete.");
+    }
+}
