@@ -3,8 +3,28 @@
     const response = await fetch('/api/Wellness');
     const data = await response.json();
 
+    // Get the search term from the input field
+    const searchInput = document.getElementById('workerSearch');
+
+    // Data filtering based on search term
+    let filteredData = data;
+
+    if (searchInput && searchInput.value.trim() !== "") {
+        const searchTerm = searchInput.value.toLowerCase();
+        filteredData = data.filter(log =>
+            log.workerName && log.workerName.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    const summaryDiv = document.getElementById('riskSummary');
+    if (filteredData.length === 0) {
+        if (summaryDiv) summaryDiv.innerHTML = "❌ No data found for this worker.";
+        if (window.myChart) { window.myChart.destroy(); }
+        return;
+    }
+
     // 2. Select only the data to display on the grap (the last 7 data)
-    const recentLogs = data.slice(-7);
+    const recentLogs = filteredData.slice(-7);
 
     // x : date
     const labels = recentLogs.map(log => new Date(log.createdDate).toLocaleDateString());

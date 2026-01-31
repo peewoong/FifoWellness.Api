@@ -6,8 +6,9 @@
     <title>FIFO Wellness Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+    <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             padding: 40px;
             background-color: #f8f9fa;
         }
@@ -21,6 +22,32 @@
             margin: auto;
         }
 
+        .search-container {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f1f3f5;
+            border-radius: 10px;
+        }
+
+        #workerSearch {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            width: 200px;
+            margin-right: 10px;
+        }
+
+        .search-btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
         h1 {
             color: #2c3e50;
             text-align: center;
@@ -30,7 +57,17 @@
 </head>
 <body>
     <div class="dashboard-card">
+        <div class="search-container">
+            <input type="text" id="workerSearch" placeholder="Enter Name (e.g. Adam)">
+            <button class="search-btn" onclick="loadDashboard()">Search</button>
+        </div>
+
         <h1>Work-Life Balance: Sleep Trend</h1>
+
+        <div id="riskSummary" style="text-align: center; margin-bottom: 25px; padding: 15px; border-radius: 8px; background: #fff; border: 1px solid #ddd; font-size: 1.1em;">
+            Fetching latest data...
+        </div>
+
         <canvas id="sleepChart"></canvas>
     </div>
 
