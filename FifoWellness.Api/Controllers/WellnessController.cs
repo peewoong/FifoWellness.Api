@@ -22,6 +22,7 @@ namespace FifoWellness.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<WellnessLog>>> GetWellnessLogs()
         {
+            
             return await _context.WellnessLogs.ToListAsync();
         }
 

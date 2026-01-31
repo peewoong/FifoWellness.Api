@@ -8,3 +8,5 @@ services:
       - ACCEPT_EULA=Y # Accept the end user license agreement
     ports:
       - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql # save the data

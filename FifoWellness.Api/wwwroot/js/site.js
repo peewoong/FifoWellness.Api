@@ -1,45 +1,76 @@
-﻿// 페이지가 열리자마자 실행되는 함수입니다.
-async function loadDashboard() {
-    // 1. 우리가 만든 API에서 데이터를 가져옵니다.
+﻿async function loadDashboard() {
+    // 1. Get data form the API we created
     const response = await fetch('/api/Wellness');
     const data = await response.json();
 
-    // 2. 그래프에 표시할 데이터만 골라냅니다. (최근 7개)
+    // 2. Select only the data to display on the grap (the last 7 data)
     const recentLogs = data.slice(-7);
 
-    // x축: 날짜 (가독성 있게 변환)
+    // x : date
     const labels = recentLogs.map(log => new Date(log.createdDate).toLocaleDateString());
 
-    // y축: 수면 시간
+    // y : sleep hours
     const sleepHours = recentLogs.map(log => log.sleepHours);
 
-    // 3. HTML에 있는 'sleepChart'라는 공간에 그래프를 그립니다.
+    const pointColors = recentLogs.map(log => {
+        if ((log.fatigueStatus && log.fatigueStatus.includes("Risk")) || log.sleepHours < 6) {
+            return '#e74c3c'; // red
+        }
+        return '#4bc0c0'; // blue
+    });
+
+    // 3. Draw a graph in the 'sleepChart' in HTML
     const ctx = document.getElementById('sleepChart').getContext('2d');
 
-    new Chart(ctx, {
-        type: 'line', // 선 그래프 형태
+    if (window.myChart) {
+        window.myChart.destroy();
+    }
+
+    window.myChart = new Chart(ctx, {
+        type: 'line', // line graph form
         data: {
             labels: labels,
             datasets: [{
                 label: 'Daily Sleep Hours',
                 data: sleepHours,
-                borderColor: '#4bc0c0', // 선 색상
-                backgroundColor: 'rgba(75, 192, 192, 0.2)', // 선 아래 채우기 색상
+                borderColor: '#4bc0c0', // line color
+                backgroundColor: 'rgba(75, 192, 192, 0.2)', // color under the line
+                pointBackgroundColor: pointColors,
+                pointBorderColor: pointColors,
+                pointRadius : 6,
                 borderWidth: 3,
                 fill: true,
-                tension: 0.4 // 선을 부드럽게 곡선으로 만듦
+                tension: 0.4 // make the line into a smooth curve
             }]
         },
         options: {
             scales: {
-                y: {
-                    beginAtZero: true, // 0부터 시작
-                    max: 12,           // 수면 시간이니 12시간을 최대로 설정
-                    title: { display: true, text: 'Hours' }
-                }
+                y: { beginAtZero: true, max : 12 }
             }
         }
     });
+
+    // [ADD] Call the summary update function
+    updateRiskSummary(recentLogs);
 }
+
+function updateRiskSummary(logs) {
+    const riskWorkers = logs
+        .filter(log => log.fatigueStatus && log.fatigueStatus.includes("Risk"))
+        .map(log => log.workerName);
+
+    const summaryDiv = document.getElementById('riskSummary');
+    if (!summaryDiv) return;
+
+    // Remove duplicates using Set
+    const uniqueRisks = [...new Set(riskWorkers)];
+
+    if (uniqueRisks.length > 0) {
+        summaryDiv.innerHTML = `<strong style="color: #e74c3c;">⚠️ High Risk Alert:</strong> ${uniqueRisks.join(', ')} (Requires Attention)`;
+    } else {
+        summaryDiv.innerHTML = `<strong style="color: #27ae60;">✅ Status:</strong> All monitored workers are within safe fatigue limits.`;
+    }
+}
+
 
 loadDashboard();
