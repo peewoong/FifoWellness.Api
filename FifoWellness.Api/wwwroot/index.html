@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FIFO Wellness Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
+    <script src="js/site.js" defer></script>
+
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
@@ -28,14 +29,18 @@
             padding: 15px;
             background-color: #f1f3f5;
             border-radius: 10px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
         #workerSearch {
             padding: 10px;
             border-radius: 5px;
             border: 1px solid #ddd;
-            width: 200px;
-            margin-right: 10px;
+            width: 150px;
         }
 
         .search-btn {
@@ -60,7 +65,7 @@
         <div class="search-container">
             <input type="text" id="workerSearch" placeholder="Name">
             <input type="date" id="startDate" style="padding: 9px; border-radius: 5px; border: 1px solid #ddd;">
-            ~
+            <span>~</span>
             <input type="date" id="endDate" style="padding: 9px; border-radius: 5px; border: 1px solid #ddd;">
 
             <button class="search-btn" onclick="loadDashboard()">Search & Filter</button>
@@ -69,7 +74,7 @@
             </button>
         </div>
 
-        <h1>Work-Life Balance: Sleep Trend</h1>
+        <h1>Work-Life Balance: Wellness Trend</h1>
 
         <div id="riskSummary" style="text-align: center; margin-bottom: 25px; padding: 15px; border-radius: 8px; background: #fff; border: 1px solid #ddd; font-size: 1.1em;">
             Fetching latest data...
@@ -82,8 +87,10 @@
             <table style="width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff;">
                 <thead>
                     <tr style="border-bottom: 2px solid #eee; text-align: left;">
-                        <th style="padding: 10px;">Name</th>
+                        <th style="padding: 10px;">Name (Shift)</th>
                         <th style="padding: 10px;">Sleep</th>
+                        <th style="padding: 10px;">Nutrition (In/Out)</th>
+                        <th style="padding: 10px;">Steps</th>
                         <th style="padding: 10px;">Date</th>
                         <th style="padding: 10px;">Action</th>
                     </tr>
@@ -93,29 +100,26 @@
             </table>
         </div>
 
+        <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
+
         <div style="background: #edf2f7; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
-    <h3 style="margin-top: 0; color: #2d3748;">Add Daily Wellness Log</h3>
-    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-        <input type="text" id="newName" placeholder="Worker Name" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; flex: 1; min-width: 150px;">
-        
-        <select id="newShift" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; background: white;">
-            <option value="Day">Day Shift</option>
-            <option value="Night">Night Shift</option>
-        </select>
+            <h3 style="margin-top: 0; color: #2d3748;">Add Daily Wellness Log</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <input type="text" id="newName" placeholder="Worker Name" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; flex: 1; min-width: 150px;">
 
-        <input type="number" id="newSleep" placeholder="Sleep (h)" step="0.1" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; width: 90px;">
-        
-        <input type="number" id="newIntake" placeholder="Intake (kcal)" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; width: 110px;">
-        
-        <input type="number" id="newBurned" placeholder="Burned (kcal)" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; width: 110px;">
-        
-        <input type="number" id="newSteps" placeholder="Steps" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; width: 100px;">
+                <select id="newShift" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; background: white;">
+                    <option value="Day">Day Shift</option>
+                    <option value="Night">Night Shift</option>
+                </select>
 
-        <button onclick="addLog()" style="padding: 8px 20px; background: #48bb78; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Submit</button>
+                <input type="number" id="newSleep" placeholder="Sleep (h)" step="0.1" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; width: 90px;">
+                <input type="number" id="newIntake" placeholder="Intake (kcal)" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; width: 110px;">
+                <input type="number" id="newBurned" placeholder="Burned (kcal)" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; width: 110px;">
+                <input type="number" id="newSteps" placeholder="Steps" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; width: 100px;">
+
+                <button type="button" onclick="addLog()" style="padding: 8px 20px; background: #48bb78; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Submit</button>
+            </div>
+        </div>
     </div>
-</div>
-    </div>
-
-    <script src="js/site.js"></script>
 </body>
 </html>

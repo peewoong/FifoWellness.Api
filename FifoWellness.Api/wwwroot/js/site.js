@@ -1,202 +1,182 @@
-﻿async function loadDashboard() {
-    // 1. Get data form the API we created
-    const response = await fetch('/api/Wellness');
-    const data = await response.json();
-
-    // Get the search term from the input field
-    const searchInput = document.getElementById('workerSearch');
-
-    // Data filtering based on search term
-    let filteredData = data;
-
-    if (searchInput && searchInput.value.trim() !== "") {
-        const searchTerm = searchInput.value.toLowerCase();
-        filteredData = data.filter(log =>
-            log.workerName && log.workerName.toLowerCase().includes(searchTerm)
-        );
-    }
-
-    const summaryDiv = document.getElementById('riskSummary');
-    if (filteredData.length === 0) {
-        if (summaryDiv) summaryDiv.innerHTML = "❌ No data found for this worker.";
-        if (window.myChart) { window.myChart.destroy(); }
-        return;
-    }
-
-    // 2. Select only the data to display on the grap (the last 7 data)
-    const recentLogs = filteredData.slice(-7);
-
-    // x : date
-    const labels = recentLogs.map(log => new Date(log.createdDate).toLocaleDateString());
-
-    // y : sleep hours
-    const sleepHours = recentLogs.map(log => log.sleepHours);
-
-    const pointColors = recentLogs.map(log => {
-        if ((log.fatigueStatus && log.fatigueStatus.includes("Risk")) || log.sleepHours < 6) {
-            return '#e74c3c'; // red
-        }
-        return '#4bc0c0'; // blue
-    });
-
-    const ctx = document.getElementById('sleepChart').getContext('2d');
-
-    if (window.myChart) {
-        window.myChart.destroy();
-    }
-
-    const intakeData = recentLogs.map(log => log.calorieIntake);
-    const burnedData = recentLogs.map(log => log.caloriesBurned);
-    const stepsData = recentLogs.map(log => log.steps);
-
-    window.myChart = new Chart(ctx, {
-        type: 'bar', 
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'Sleep Hours (h)',
-                    data: sleepHours,
-                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                    borderColor: '#4bc0c0',
-                    borderWidth: 1,
-                    yAxisID: 'y', 
-                    order: 2 
-                },
-                {
-                    label: 'Calories Burned (kcal)',
-                    type: 'line', 
-                    data: burnedData,
-                    borderColor: '#e67e22',
-                    backgroundColor: '#e67e22',
-                    borderWidth: 3,
-                    fill: false,
-                    tension: 0.4,
-                    yAxisID: 'y1', 
-                    order: 1 
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: { // left axis : sleep hours (0~12)
-                    type: 'linear',
-                    position: 'left',
-                    beginAtZero: true,
-                    max: 12,
-                    title: { display: true, text: 'Sleep Hours' }
-                },
-                y1: { // right axis : calorie (0~4000)
-                    type: 'linear',
-                    position: 'right',
-                    beginAtZero: true,
-                    grid: { drawOnChartArea: false }, // 격자선 중복 방지
-                    title: { display: true, text: 'Calories (kcal)' }
-                }
-            }
-        }
-    });
-
-    // [ADD] Call the summary update function
-    updateRiskSummary(recentLogs);
-
-    // [ADD] Render the log table
-    renderTable(recentLogs);
-}
-
-function updateRiskSummary(logs) {
-    const riskWorkers = logs
-        .filter(log => log.fatigueStatus && log.fatigueStatus.includes("Risk"))
-        .map(log => log.workerName);
-
-    const summaryDiv = document.getElementById('riskSummary');
-    if (!summaryDiv) return;
-
-    // Remove duplicates using Set
-    const uniqueRisks = [...new Set(riskWorkers)];
-
-    if (uniqueRisks.length > 0) {
-        summaryDiv.innerHTML = `<strong style="color: #e74c3c;">⚠️ High Risk Alert:</strong> ${uniqueRisks.join(', ')} (Requires Attention)`;
-    } else {
-        summaryDiv.innerHTML = `<strong style="color: #27ae60;">✅ Status:</strong> All monitored workers are within safe fatigue limits.`;
-    }
-}
+﻿let allLogs = [];
+const pageSize = 10;
+let currentPage = 1;
 
 loadDashboard();
 
+async function loadDashboard() {
+    try {
+        const response = await fetch('/api/Wellness');
+        allLogs = await response.json();
+        applyFiltersAndRender();
+    } catch (err) {
+        console.error("Failed to load dashboard:", err);
+    }
+}
+
+function applyFiltersAndRender() {
+    const searchTerm = document.getElementById('workerSearch').value.toLowerCase();
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+
+    let filtered = allLogs;
+
+    if (searchTerm) {
+        filtered = filtered.filter(log => log.workerName.toLowerCase().includes(searchTerm));
+    }
+    if (startDate) {
+        filtered = filtered.filter(log => new Date(log.createdDate) >= new Date(startDate));
+    }
+    if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59);
+        filtered = filtered.filter(log => new Date(log.createdDate) <= end);
+    }
+
+    filtered.sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
+
+    updateRiskSummary(filtered);
+    renderChart(filtered.slice(0, 7).reverse());
+    renderTable(filtered);
+}
+
+function updateRiskSummary(logs) {
+    const riskLogs = logs.filter(l => l.sleepHours < 6);
+    const riskNames = [...new Set(riskLogs.map(l => l.workerName))];
+    const summary = document.getElementById('riskSummary');
+
+    if (riskNames.length === 0) {
+        summary.innerHTML = "✅ All workers are within safe fatigue limits.";
+        return;
+    }
+
+    let nameDisplay = "";
+    if (riskNames.length <= 3) {
+        nameDisplay = `(${riskNames.join(', ')})`;
+    } else {
+        nameDisplay = `(${riskNames.slice(0, 3).join(', ')} 외 ${riskNames.length - 3}명)`;
+    }
+
+    summary.innerHTML = `<strong style="color: #e74c3c;">⚠️ High Risk: ${riskNames.length} persons</strong> ${nameDisplay}`;
+}
+
 function renderTable(logs) {
     const tableBody = document.getElementById('logTableBody');
-    if (!tableBody) return;
-
     tableBody.innerHTML = '';
 
-    logs.reverse().forEach(log => { 
-        const row = document.createElement('tr');
-        row.style.borderBottom = "1px solid #eee";
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    const pagedLogs = logs.slice(start, end);
 
-        row.innerHTML = `
-            <td style="padding: 10px;">${log.workerName} (${log.shiftType || 'N/A'})</td>
-            <td style="padding: 10px;">${log.sleepHours}h</td>
-            <td style="padding: 10px;">${log.calorieIntake} / ${log.caloriesBurned} kcal</td>
-            <td style="padding: 10px;">${log.steps.toLocaleString()} steps</td>
-            <td style="padding: 10px;">${new Date(log.createdDate).toLocaleDateString()}</td>
-            <td style="padding: 10px;">
-                <button onclick="deleteLog(${log.id})" style="color: #e74c3c; border: none; background: none; cursor: pointer; font-weight: bold;">Delete</button>
-            </td>
-        `;
-        tableBody.appendChild(row);
+    pagedLogs.forEach(log => {
+        const row = `<tr>
+            <td style="padding:10px;">${log.workerName} (${log.shiftType || '-'})</td>
+            <td style="padding:10px;">${log.sleepHours}h</td>
+            <td style="padding:10px;">${log.calorieIntake}/${log.caloriesBurned}</td>
+            <td style="padding:10px;">${log.steps}</td>
+            <td style="padding:10px;">${new Date(log.createdDate).toLocaleDateString()}</td>
+            <td style="padding:10px;"><button onclick="deleteLog(${log.id})" style="color:red; cursor:pointer; border:none; background:none;">Delete</button></td>
+        </tr>`;
+        tableBody.innerHTML += row;
+    });
+
+    renderPaginationControls(logs.length);
+}
+
+function renderPaginationControls(totalCount) {
+    let paginationDiv = document.getElementById('pagination');
+    if (!paginationDiv) {
+        paginationDiv = document.createElement('div');
+        paginationDiv.id = 'pagination';
+        paginationDiv.style.textAlign = 'center';
+        paginationDiv.style.marginTop = '20px';
+        document.querySelector('.dashboard-card').appendChild(paginationDiv);
+    }
+
+    const totalPages = Math.ceil(totalCount / pageSize);
+    paginationDiv.innerHTML = `
+        <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Prev</button>
+        <span style="margin: 0 15px;">Page ${currentPage} of ${totalPages}</span>
+        <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+    `;
+}
+
+function changePage(page) {
+    currentPage = page;
+    applyFiltersAndRender();
+}
+
+document.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        const activeId = document.activeElement.id;
+        if (['newName', 'newSleep', 'newIntake', 'newBurned', 'newSteps'].includes(activeId)) {
+            addLog();
+        }
+    }
+});
+
+async function addLog() {
+    const name = document.getElementById('newName').value.trim();
+    const shift = document.getElementById('newShift').value;
+    const sleep = parseFloat(document.getElementById('newSleep').value);
+    const intake = parseInt(document.getElementById('newIntake').value) || 0;
+    const burned = parseInt(document.getElementById('newBurned').value) || 0;
+    const steps = parseInt(document.getElementById('newSteps').value) || 0;
+
+    if (!name || isNaN(sleep)) {
+        alert("Please enter Name and Sleep Hours.");
+        return;
+    }
+
+    const newLog = { workerName: name, shiftType: shift, sleepHours: sleep, calorieIntake: intake, caloriesBurned: burned, steps: steps };
+
+    const response = await fetch('/api/Wellness', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newLog)
+    });
+
+    if (response.ok) {
+        alert("✅ Log added!");
+        ['newName', 'newSleep', 'newIntake', 'newBurned', 'newSteps'].forEach(id => document.getElementById(id).value = '');
+        currentPage = 1;
+        await loadDashboard();
+    }
+}
+
+function renderChart(recentData) {
+    const ctx = document.getElementById('sleepChart').getContext('2d');
+    const labels = recentData.map(log => new Date(log.createdDate).toLocaleDateString());
+    const sleepData = recentData.map(log => log.sleepHours);
+    const burnedData = recentData.map(log => log.caloriesBurned);
+
+    if (window.myChart) { window.myChart.destroy(); }
+
+    window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Sleep (h)', data: sleepData, backgroundColor: 'rgba(75, 192, 192, 0.6)', yAxisID: 'y' },
+                { label: 'Burned (kcal)', type: 'line', data: burnedData, borderColor: '#e67e22', yAxisID: 'y1' }
+            ]
+        },
+        options: { scales: { y: { beginAtZero: true }, y1: { beginAtZero: true, position: 'right' } } }
     });
 }
 
 async function deleteLog(id) {
-    if (!confirm("Are you sure you want to delete this log?")) return;
-
-    const response = await fetch(`/api/Wellness/${id}`, {
-        method: 'DELETE'
-    });
-
-    if (response.ok)
-    {
-        alert("Deleted successfully!");
-        loadDashboard(); 
-    }
-    else
-    {
-        alert("Failed to delete.");
-    }
+    if (!confirm("Delete?")) return;
+    await fetch(`/api/Wellness/${id}`, { method: 'DELETE' });
+    loadDashboard();
 }
 
-function downloadCSV() { 
-    const table = document.getElementById('logTableBody');
-    const rows = table.querySelectorAll('tr');
-
-    if (rows.length === 0) {
-        alert("No data available to download.");
-        return;
-    }
-
-    let csvContent = "Worker Name,Sleep Hours,Date\n";
-
-    rows.forEach(row => {
-        const cols = row.querySelectorAll('td');
-        const rowData = Array.from(cols)
-            .slice(0, 3) 
-            .map(col => col.innerText.replace('h', '')) // 'h' 글자 제거
-            .join(",");
-        csvContent += rowData + "\n";
+function downloadCSV() {
+    let csv = "Name,Sleep,In/Out,Steps,Date\n";
+    allLogs.forEach(log => {
+        csv += `${log.workerName},${log.sleepHours},${log.calorieIntake}/${log.caloriesBurned},${log.steps},${new Date(log.createdDate).toLocaleDateString()}\n`;
     });
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    const timestamp = new Date().toISOString().split('T')[0];
-    link.setAttribute("href", url);
-    link.setAttribute("download", `FIFO_Wellness_Report_${timestamp}.csv`);
-    link.style.visibility = 'hidden';
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const a = document.createElement("a"); a.href = url; a.download = "Wellness_Report.csv"; a.click();
 }
