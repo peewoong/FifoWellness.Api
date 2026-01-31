@@ -126,10 +126,93 @@ async function deleteLog(id) {
         method: 'DELETE'
     });
 
-    if (response.ok) {
+    if (response.ok)
+    {
         alert("Deleted successfully!");
         loadDashboard(); 
-    } else {
+    }
+    else
+    {
         alert("Failed to delete.");
     }
+}
+
+async function addLog() {
+    const name = document.getElementById('newName').value.trim();
+    const shift = document.getElementById('newShift').value;
+    const sleep = parseFloat(document.getElementById('newSleep').value);
+
+    if (!name || isNaN(sleep))
+    {
+        alert("Please enter both name and sleep hours.");
+        return;
+    }
+
+    const newLog = {
+        workerName: name,
+        shiftType: shift,
+        sleepHours: sleep
+    };
+
+    try {
+        const response = await fetch('/api/Wellness', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newLog)
+        });
+
+        if (response.ok)
+        {
+            alert("New log added!");
+            
+            document.getElementById('newName').value = '';
+            document.getElementById('newSleep').value = '';
+         
+            loadDashboard();
+        }
+        else
+        {
+            const errorData = await response.json();
+            alert("Error: " + (errorData.errors?.SleepHours || "Failed to add log"));
+        }
+    }
+    catch (err)
+    {
+        console.error("API Error:", err);
+    }
+}
+
+
+function downloadCSV() { 
+    const table = document.getElementById('logTableBody');
+    const rows = table.querySelectorAll('tr');
+
+    if (rows.length === 0) {
+        alert("No data available to download.");
+        return;
+    }
+
+    let csvContent = "Worker Name,Sleep Hours,Date\n";
+
+    rows.forEach(row => {
+        const cols = row.querySelectorAll('td');
+        const rowData = Array.from(cols)
+            .slice(0, 3) 
+            .map(col => col.innerText.replace('h', '')) // 'h' 글자 제거
+            .join(",");
+        csvContent += rowData + "\n";
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    const timestamp = new Date().toISOString().split('T')[0];
+    link.setAttribute("href", url);
+    link.setAttribute("download", `FIFO_Wellness_Report_${timestamp}.csv`);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
