@@ -46,11 +46,20 @@ namespace FifoWellness.Api.Controllers
 
             // Set the creation timestamp and persist the new log to the database.
             log.CreatedDate = DateTime.UtcNow;
+
+            if (log.SleepHours < 6)
+            {
+                log.FatigueStatus = "High Risk";
+            }
+            else
+            {
+                log.FatigueStatus = "Normal";
+            }
+
             _context.WellnessLogs.Add(log);
             await _context.SaveChangesAsync();
 
-            // Returns the created log with a 201 created status
-            return CreatedAtAction(nameof(GetWellnessLogs), new { id = log.Id }, log);
+            return Ok(log);
         }
 
         [HttpDelete("{id}")]

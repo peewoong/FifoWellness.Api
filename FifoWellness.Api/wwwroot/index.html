@@ -94,17 +94,26 @@
         </div>
 
         <div style="background: #edf2f7; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
-            <h3 style="margin-top: 0; color: #2d3748;">Add Daily Wellness Log</h3>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <input type="text" id="newName" placeholder="Worker Name" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; flex: 1;">
-                <select id="newShift" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0;">
-                    <option value="Day">Day Shift</option>
-                    <option value="Night">Night Shift</option>
-                </select>
-                <input type="number" id="newSleep" placeholder="Sleep (0-24h)" step="0.5" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; width: 120px;">
-                <button onclick="addLog()" style="padding: 8px 20px; background: #48bb78; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Submit</button>
-            </div>
-        </div>
+    <h3 style="margin-top: 0; color: #2d3748;">Add Daily Wellness Log</h3>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <input type="text" id="newName" placeholder="Worker Name" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; flex: 1; min-width: 150px;">
+        
+        <select id="newShift" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; background: white;">
+            <option value="Day">Day Shift</option>
+            <option value="Night">Night Shift</option>
+        </select>
+
+        <input type="number" id="newSleep" placeholder="Sleep (h)" step="0.1" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; width: 90px;">
+        
+        <input type="number" id="newIntake" placeholder="Intake (kcal)" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; width: 110px;">
+        
+        <input type="number" id="newBurned" placeholder="Burned (kcal)" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; width: 110px;">
+        
+        <input type="number" id="newSteps" placeholder="Steps" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0; width: 100px;">
+
+        <button onclick="addLog()" style="padding: 8px 20px; background: #48bb78; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Submit</button>
+    </div>
+</div>
     </div>
 
     <script src="js/site.js"></script>

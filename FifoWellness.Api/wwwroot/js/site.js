@@ -39,33 +39,61 @@
         return '#4bc0c0'; // blue
     });
 
-    // 3. Draw a graph in the 'sleepChart' in HTML
     const ctx = document.getElementById('sleepChart').getContext('2d');
 
     if (window.myChart) {
         window.myChart.destroy();
     }
 
+    const intakeData = recentLogs.map(log => log.calorieIntake);
+    const burnedData = recentLogs.map(log => log.caloriesBurned);
+    const stepsData = recentLogs.map(log => log.steps);
+
     window.myChart = new Chart(ctx, {
-        type: 'line', // line graph form
+        type: 'bar', 
         data: {
             labels: labels,
-            datasets: [{
-                label: 'Daily Sleep Hours',
-                data: sleepHours,
-                borderColor: '#4bc0c0', // line color
-                backgroundColor: 'rgba(75, 192, 192, 0.2)', // color under the line
-                pointBackgroundColor: pointColors,
-                pointBorderColor: pointColors,
-                pointRadius : 6,
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4 // make the line into a smooth curve
-            }]
+            datasets: [
+                {
+                    label: 'Sleep Hours (h)',
+                    data: sleepHours,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: '#4bc0c0',
+                    borderWidth: 1,
+                    yAxisID: 'y', 
+                    order: 2 
+                },
+                {
+                    label: 'Calories Burned (kcal)',
+                    type: 'line', 
+                    data: burnedData,
+                    borderColor: '#e67e22',
+                    backgroundColor: '#e67e22',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4,
+                    yAxisID: 'y1', 
+                    order: 1 
+                }
+            ]
         },
         options: {
+            responsive: true,
             scales: {
-                y: { beginAtZero: true, max : 12 }
+                y: { // left axis : sleep hours (0~12)
+                    type: 'linear',
+                    position: 'left',
+                    beginAtZero: true,
+                    max: 12,
+                    title: { display: true, text: 'Sleep Hours' }
+                },
+                y1: { // right axis : calorie (0~4000)
+                    type: 'linear',
+                    position: 'right',
+                    beginAtZero: true,
+                    grid: { drawOnChartArea: false }, // 격자선 중복 방지
+                    title: { display: true, text: 'Calories (kcal)' }
+                }
             }
         }
     });
@@ -108,8 +136,10 @@ function renderTable(logs) {
         row.style.borderBottom = "1px solid #eee";
 
         row.innerHTML = `
-            <td style="padding: 10px;">${log.workerName}</td>
+            <td style="padding: 10px;">${log.workerName} (${log.shiftType || 'N/A'})</td>
             <td style="padding: 10px;">${log.sleepHours}h</td>
+            <td style="padding: 10px;">${log.calorieIntake} / ${log.caloriesBurned} kcal</td>
+            <td style="padding: 10px;">${log.steps.toLocaleString()} steps</td>
             <td style="padding: 10px;">${new Date(log.createdDate).toLocaleDateString()}</td>
             <td style="padding: 10px;">
                 <button onclick="deleteLog(${log.id})" style="color: #e74c3c; border: none; background: none; cursor: pointer; font-weight: bold;">Delete</button>
@@ -136,52 +166,6 @@ async function deleteLog(id) {
         alert("Failed to delete.");
     }
 }
-
-async function addLog() {
-    const name = document.getElementById('newName').value.trim();
-    const shift = document.getElementById('newShift').value;
-    const sleep = parseFloat(document.getElementById('newSleep').value);
-
-    if (!name || isNaN(sleep))
-    {
-        alert("Please enter both name and sleep hours.");
-        return;
-    }
-
-    const newLog = {
-        workerName: name,
-        shiftType: shift,
-        sleepHours: sleep
-    };
-
-    try {
-        const response = await fetch('/api/Wellness', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newLog)
-        });
-
-        if (response.ok)
-        {
-            alert("New log added!");
-            
-            document.getElementById('newName').value = '';
-            document.getElementById('newSleep').value = '';
-         
-            loadDashboard();
-        }
-        else
-        {
-            const errorData = await response.json();
-            alert("Error: " + (errorData.errors?.SleepHours || "Failed to add log"));
-        }
-    }
-    catch (err)
-    {
-        console.error("API Error:", err);
-    }
-}
-
 
 function downloadCSV() { 
     const table = document.getElementById('logTableBody');
