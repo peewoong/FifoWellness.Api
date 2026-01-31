@@ -31,6 +31,11 @@ namespace FifoWellness.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<WellnessLog>> PostWellnessLog(WellnessLog log)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             // Retrieve the existing wellness history for the specific worker from the database.
             var history = await _context.WellnessLogs
                 .Where(w => w.WorkerName == log.WorkerName)
