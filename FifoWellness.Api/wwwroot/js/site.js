@@ -9,7 +9,7 @@ async function loadDashboard() {
         const response = await fetch('/api/Wellness');
         allLogs = await response.json();
         applyFiltersAndRender();
-    } catch (err) {
+    } catch (err) { 
         console.error("Failed to load dashboard:", err);
     }
 }
@@ -106,6 +106,11 @@ function changePage(page) {
     applyFiltersAndRender();
 }
 
+function onSearchClick() {
+    currentPage = 1;
+    applyFiltersAndRender();
+}
+
 document.addEventListener('keypress', function (e) {
     if (e.key === 'Enter') {
         const activeId = document.activeElement.id;
@@ -172,11 +177,33 @@ async function deleteLog(id) {
 }
 
 function downloadCSV() {
-    let csv = "Name,Sleep,In/Out,Steps,Date\n";
-    allLogs.forEach(log => {
-        csv += `${log.workerName},${log.sleepHours},${log.calorieIntake}/${log.caloriesBurned},${log.steps},${new Date(log.createdDate).toLocaleDateString()}\n`;
+    const searchTerm = document.getElementById('workerSearch').value.toLowerCase();
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+
+    let toExport = allLogs.filter(log => {
+        const matchesName = !searchTerm || log.workerName.toLowerCase().includes(searchTerm);
+        const matchesStart = !startDate || new Date(log.createdDate) >= new Date(startDate);
+        const matchesEnd = !endDate || new Date(log.createdDate) <= new Date(endDate + "T23:59:59");
+        return matchesName && matchesStart && matchesEnd;
     });
-    const blob = new Blob([csv], { type: 'text/csv' });
+
+    if (toExport.length === 0) {
+        alert("No data available to export with current filters.");
+        return;
+    }
+
+    let csv = "Name,Shift,Sleep(h),Intake(kcal),Burned(kcal),Steps,Date\n";
+    toExport.forEach(log => {
+        csv += `${log.workerName},${log.shiftType || '-'},${log.sleepHours},${log.calorieIntake},${log.caloriesBurned},${log.steps},${new Date(log.createdDate).toLocaleDateString()}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "Wellness_Report.csv"; a.click();
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Wellness_Export_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
