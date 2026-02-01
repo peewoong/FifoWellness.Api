@@ -128,8 +128,13 @@ async function addLog() {
     const burned = parseInt(document.getElementById('newBurned').value) || 0;
     const steps = parseInt(document.getElementById('newSteps').value) || 0;
 
-    if (!name || isNaN(sleep)) {
-        alert("Please enter Name and Sleep Hours.");
+    if (!name) { alert("Worker name is required."); return; }
+    if (isNaN(sleep) || sleep < 0 || sleep > 24) {
+        alert("Please enter a valid sleep duration (0-24 hours).");
+        return;
+    }
+    if (intake < 0 || burned < 0) {
+        alert("Calories cannot be negative.");
         return;
     }
 
@@ -155,6 +160,10 @@ function renderChart(recentData) {
     const sleepData = recentData.map(log => log.sleepHours);
     const burnedData = recentData.map(log => log.caloriesBurned);
 
+    const barColors = sleepData.map(hours =>
+        hours < 6 ? 'rgba(231, 76, 60, 0.8)' : 'rgba(75, 192, 192, 0.6)'
+    );
+
     if (window.myChart) { window.myChart.destroy(); }
 
     window.myChart = new Chart(ctx, {
@@ -162,11 +171,16 @@ function renderChart(recentData) {
         data: {
             labels: labels,
             datasets: [
-                { label: 'Sleep (h)', data: sleepData, backgroundColor: 'rgba(75, 192, 192, 0.6)', yAxisID: 'y' },
+                { label: 'Sleep (h)', data: sleepData, backgroundColor: barColors, yAxisID: 'y' },
                 { label: 'Burned (kcal)', type: 'line', data: burnedData, borderColor: '#e67e22', yAxisID: 'y1' }
             ]
         },
-        options: { scales: { y: { beginAtZero: true }, y1: { beginAtZero: true, position: 'right' } } }
+        options: {
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Hours' } },
+                y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Calories' } }
+            }
+        }
     });
 }
 
