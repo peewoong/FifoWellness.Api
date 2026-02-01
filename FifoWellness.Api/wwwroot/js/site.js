@@ -14,6 +14,24 @@ async function loadDashboard() {
     }
 }
 
+function updateKPICards(logs) {
+    if (!logs || logs.length === 0) {
+        document.getElementById('avgSleep').innerText = "0 h";
+        document.getElementById('riskCount').innerText = "0 Persons";
+        document.getElementById('avgSteps').innerText = "0";
+        return;
+    }
+
+    const avgSleep = logs.reduce((acc, log) => acc + log.sleepHours, 0) / logs.length;
+    document.getElementById('avgSleep').innerText = `${avgSleep.toFixed(1)} h`;
+
+    const risks = logs.filter(log => log.sleepHours < 6).length;
+    document.getElementById('riskCount').innerText = `${risks} Persons`;
+
+    const avgSteps = logs.reduce((acc, log) => acc + (log.steps || 0), 0) / logs.length;
+    document.getElementById('avgSteps').innerText = Math.round(avgSteps).toLocaleString();
+}
+
 function applyFiltersAndRender() {
     const searchTerm = document.getElementById('workerSearch').value.toLowerCase();
     const startDate = document.getElementById('startDate').value;
@@ -38,6 +56,7 @@ function applyFiltersAndRender() {
     updateRiskSummary(filtered);
     renderChart(filtered.slice(0, 7).reverse());
     renderTable(filtered);
+    updateKPICards(filtered);
 }
 
 function updateRiskSummary(logs) {
