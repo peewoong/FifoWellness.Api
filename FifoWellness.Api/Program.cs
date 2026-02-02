@@ -25,8 +25,8 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
-app.UseStaticFiles();
 app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.UseHttpsRedirection();
 
